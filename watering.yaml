@@ -1,0 +1,160 @@
+esphome:
+  name: watering
+  friendly_name: watering
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret enc_key
+
+  # Define a service to call the watering script from Home Assistant
+  services:
+    - service: on_for_duration
+      variables:
+        relay_id: int
+        duration: int
+      then:
+        - logger.log: "On for duration" 
+        - script.execute:
+            id: on_for_duration
+            relay_id: !lambda 'return relay_id;'
+            duration: !lambda 'return duration;'
+        - logger.log: "Script done"
+
+    - service: stop
+      then:
+        - logger.log: "Stopping"
+        - script.execute:
+            id: stop_all
+            
+# Script for running the watering for a certain duration in seconds
+script:
+  - id: on_for_duration
+    mode: parallel
+    parameters:
+      relay_id: int
+      duration: int
+    then:
+      - script.execute:
+          id: watering_control
+          relay_id: !lambda 'return relay_id;'
+          state: True
+      - delay: !lambda 'return 1000 * duration;'
+      - script.execute:
+          id: watering_control
+          relay_id: !lambda 'return relay_id;'
+          state: False
+
+    # Script to turn on or off specific relay
+  - id: watering_control
+    parameters:
+      relay_id: int
+      state: bool
+    then:
+      # id can't be dynamic in yaml, so need this C++ snippet to map relay_id to actual id
+      - lambda: |-
+          static switch_::Switch* relay_array[] = {
+            id(relay_1),
+            id(relay_2),
+            id(relay_3),
+            id(relay_4)
+          };
+
+          if (relay_id >= 1 && relay_id <= 4) {
+            if (state) {
+              relay_array[relay_id - 1]->turn_on();
+            } else {
+              relay_array[relay_id - 1]->turn_off();
+            }
+          }      
+
+  # Script to stopp any running on duration script and shut off all relays
+  - id: stop_all
+    then:
+      - script.stop:
+          id: on_for_duration
+      - switch.turn_off: relay_1
+      - switch.turn_off: relay_2
+      - switch.turn_off: relay_3
+      - switch.turn_off: relay_4
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Watering Fallback Hotspot"
+    password: "weM69mMqZyCh"
+
+captive_portal:
+    
+binary_sensor:
+  - platform: gpio
+    name: "Watering Button 1"
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: "relay_1"
+  - platform: gpio
+    name: "Watering Button 2"
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: "relay_2"
+  - platform: gpio
+    name: "Watering Button 3"
+    pin:
+      number: GPIO10
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: "relay_3"
+  - platform: gpio
+    name: "Watering Button 4"
+    pin:
+      number: GPIO14
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+    - switch.toggle: "relay_4"
+
+  - platform: status
+    name: "Watering Status"
+
+switch:
+  - platform: gpio
+    name: "Watering Relay 1"
+    pin: GPIO12
+    id: "relay_1"        
+  - platform: gpio
+    name: "Watering Relay 2"
+    pin: GPIO5
+    id: "relay_2"
+  - platform: gpio
+    name: "Watering Relay 3"
+    pin: GPIO4
+    id: "relay_3"
+  - platform: gpio
+    name: "Watering Relay 4"
+    pin: GPIO15
+    id: "relay_4"
+
+status_led:
+  pin:
+    number: GPIO13
+    inverted: True
+
