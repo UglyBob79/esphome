@@ -1,0 +1,174 @@
+esphome:
+  name: pool
+  friendly_name: pool
+  platform: esp8266
+  board: sonoff_basic
+  esp8266_restore_from_flash : True
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret enc_key
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+    - ssid: !secret wifi_ssid_sec
+      password: !secret wifi_password_sec
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Pool Fallback Hotspot"
+    password: "IWaoCSGuAsZs"
+
+captive_portal:
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: America/Mexico_City
+    
+    on_time: 
+      - minutes: /1
+        seconds: 0
+        then:
+          - lambda: |-
+              ESP_LOGD("main", "Checking schedule...");
+
+              auto now = id(homeassistant_time).now();
+
+              int now_h = now.hour;
+              int now_m = now.minute;
+
+              ESP_LOGD("main", "Current time: %02d:%02d", now_h, now_m);
+
+              int on_h = id(pump_on_hour).state;
+              int on_m = id(pump_on_min).state;
+              int off_h = id(pump_off_hour).state;
+              int off_m = id(pump_off_min).state;
+
+              ESP_LOGD("main", "ON scheduled at: %02d:%02d", on_h, on_m);
+              ESP_LOGD("main", "OFF scheduled at: %02d:%02d", off_h, off_m);
+
+              // If same time is set for on and off, we do nothing
+              if (on_h == off_h && on_m == off_m) {
+                return;
+              }
+
+              // If the pump is on, just check if it's time to turn it off and vice versa
+              // Only switch state on exact time match, because we want to allow manual override and it's the simplest way to do it
+              // Otherwise, the schedule would override any manual change every minute
+              if (id(relay).state) {
+                if (now_h == off_h && now_m == off_m) {
+                  ESP_LOGD("main", "Scheduled Pump State: OFF");
+                  id(relay).turn_off();
+                }
+              } else {
+                if (now_h == on_h && now_m == on_m) {
+                  ESP_LOGD("main", "Scheduled Pump State: ON");
+                  id(relay).turn_on();
+                }
+              }
+
+# Device Specific Config
+binary_sensor:
+  - platform: gpio
+    id: push_button
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    internal: true
+    on_press:
+      # Prevents unintended LED lit states.
+      if:
+        condition:
+          - switch.is_off: relay
+        then:
+          - switch.turn_on: blue_led
+          - switch.turn_on: relay
+        else:
+          - switch.turn_off: relay
+
+switch:
+  # The relay switches on the red side of the LED when active.
+  - platform: gpio
+    name: "Relay"
+    pin: GPIO12
+    id: relay
+    on_turn_off:
+      if:
+        condition:
+          - switch.is_on: blue_led
+        then:
+          - switch.turn_off: blue_led
+  # With this we can control the blue side of the LED.
+  - platform: gpio
+    id: blue_led
+    pin:
+      number: GPIO13
+      inverted: True    
+
+number:
+  - platform: template
+    name: "Pump on hour"
+    id: pump_on_hour
+    icon: "mdi:clock-time-three-outline"
+    unit_of_measurement: "h"
+    optimistic: true
+    min_value: 0
+    max_value: 23
+    step: 1
+    initial_value: 0
+    restore_value: True
+
+  - platform: template
+    name: "Pump on minute"
+    id: pump_on_min
+    icon: "mdi:clock-time-three-outline"
+    unit_of_measurement: "m"
+    optimistic: true
+    min_value: 0
+    max_value: 59
+    step: 1
+    initial_value: 0
+    restore_value: True
+
+  - platform: template
+    name: "Pump off hour"
+    id: pump_off_hour
+    icon: "mdi:clock-time-three-outline"
+    unit_of_measurement: "h"
+    optimistic: true
+    min_value: 0
+    max_value: 23
+    step: 1
+    initial_value: 0
+    restore_value: True
+
+  - platform: template
+    name: "Pump off minute"
+    id: pump_off_min
+    icon: "mdi:clock-time-three-outline"
+    unit_of_measurement: "m"
+    optimistic: true
+    min_value: 0
+    max_value: 59
+    step: 1
+    initial_value: 0
+    restore_value: True
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: IP Address
+    ssid:
+      name: Connected SSID
+    
