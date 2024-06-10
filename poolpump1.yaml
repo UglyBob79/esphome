@@ -1,0 +1,6 @@
+substitutions:
+  node_name: poolpump1
+  friendly_node_name: Pool Pump Lower
+  prefix_name: "Pool Pump Lower"
+
+<<: !include apps/poolpump.yaml

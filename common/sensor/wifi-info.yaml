@@ -1,0 +1,11 @@
+# WiFi Info Sensor
+#
+# URL: https://esphome.io/components/text_sensor/wifi_info
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${friendly_node_name} IP Address
+    ssid:
+      name: ${friendly_node_name} Connected SSID
+    mac_address:
+      name: ${friendly_node_name} Mac Wifi Address

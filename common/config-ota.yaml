@@ -1,0 +1,5 @@
+# OTA Update Compontent Configuration
+#
+# URL: https://esphome.io/components/ota.html
+ota:
+  password: !secret ota_password

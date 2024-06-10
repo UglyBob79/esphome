@@ -1,0 +1,18 @@
+# Common Packages and Configuration
+<<: !include config-api.yaml
+<<: !include config-ota.yaml
+<<: !include config-wifi.yaml
+<<: !include config-time.yaml
+
+# Common Sensors
+<<: !include sensor/connection-status.yaml
+<<: !include sensor/uptime.yaml
+<<: !include sensor/wifi-signal.yaml
+<<: !include sensor/wifi-info.yaml
+
+# Common Buttons and Switches
+<<: !include button/restart.yaml
+<<: !include button/safe-mode.yaml
+
+# Enable Logging
+logger:

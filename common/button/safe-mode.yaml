@@ -1,0 +1,6 @@
+# Safe Mode Button
+#
+# URL: https://esphome.io/components/switch/safe_mode.html
+button:
+  - platform: safe_mode
+    name: Restart (Safe Mode)

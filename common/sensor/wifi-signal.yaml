@@ -1,0 +1,8 @@
+# WiFi Signal sensor
+#
+# URL: https://esphome.io/components/sensor/wifi_signal.html
+sensor:  
+  - platform: wifi_signal
+    name: ${friendly_node_name} WiFi Signal
+    id: ${node_name}_wifi_signal
+    update_interval: 5min

@@ -1,0 +1,6 @@
+substitutions:
+  node_name: irrigation1
+  friendly_node_name: Irrigation Terrace
+  prefix_name: "Irrigation"
+
+<<: !include apps/irrigation.yaml

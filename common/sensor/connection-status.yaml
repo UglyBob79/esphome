@@ -1,0 +1,6 @@
+# Status Binary Sensor
+#
+# URL: https://esphome.io/components/binary_sensor/status.html
+binary_sensor:
+  - platform: status
+    name: "Connection Status"
