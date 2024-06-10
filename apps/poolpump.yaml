@@ -3,49 +3,17 @@ packages:
   common: !include ../common/common.yaml
   hardware: !include ../hardware/esp8266/sonoff-basic-r2.yaml
 
-time:
-  - platform: sntp
-    on_time: 
-      - minutes: /1
-        seconds: 0
-        then:
-          - lambda: |-
-              ESP_LOGD("main", "Checking schedule...");
+esphome:
+  includes: apps/poolpump/scheduler.h
 
-              auto now = id(sntp_time).now();
-
-              int now_h = now.hour;
-              int now_m = now.minute;
-
-              ESP_LOGD("main", "Current time: %02d:%02d", now_h, now_m);
-
-              int on_h = id(pump_on_hour).state;
-              int on_m = id(pump_on_min).state;
-              int off_h = id(pump_off_hour).state;
-              int off_m = id(pump_off_min).state;
-
-              ESP_LOGD("main", "ON scheduled at: %02d:%02d", on_h, on_m);
-              ESP_LOGD("main", "OFF scheduled at: %02d:%02d", off_h, off_m);
-
-              // If same time is set for on and off, we do nothing
-              if (on_h == off_h && on_m == off_m) {
-                return;
-              }
-
-              // If the pump is on, just check if it's time to turn it off and vice versa
-              // Only switch state on exact time match, because we want to allow manual override and it's the simplest way to do it
-              // Otherwise, the schedule would override any manual change every minute
-              if (id(relay).state) {
-                if (now_h == off_h && now_m == off_m) {
-                  ESP_LOGD("main", "Scheduled Pump State: OFF");
-                  id(relay).turn_off();
-                }
-              } else {
-                if (now_h == on_h && now_m == on_m) {
-                  ESP_LOGD("main", "Scheduled Pump State: ON");
-                  id(relay).turn_on();
-                }
-              }
+# TODO Could this ever fail? Maybe skip a minute if the time sync is unlucky?
+interval:
+  - interval: 1min
+    then:
+      - lambda: |-
+          if (id(sntp_time).now().is_valid()) {
+            check_schedule(id(sntp_time), id(pump_on_hour), id(pump_on_min), id(pump_off_hour), id(pump_off_min), id(relay));
+          }
 
 number:
   - platform: template
