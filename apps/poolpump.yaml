@@ -6,14 +6,18 @@ packages:
 esphome:
   includes: apps/poolpump/scheduler.h
 
-# TODO Could this ever fail? Maybe skip a minute if the time sync is unlucky?
-interval:
-  - interval: 1min
-    then:
-      - lambda: |-
-          if (id(sntp_time).now().is_valid()) {
-            check_schedule(id(sntp_time), id(pump_on_hour), id(pump_on_min), id(pump_off_hour), id(pump_off_min), id(relay));
-          }
+# Check the schedule every minute
+time:
+  - platform: sntp
+    id: !extend sntp_time
+    on_time:
+      - minutes: /1
+        seconds: 0
+        then:
+          - lambda: |-
+              if (id(sntp_time).now().is_valid()) {
+                check_schedule(id(sntp_time), id(pump_on_hour), id(pump_on_min), id(pump_off_hour), id(pump_off_min), id(relay));
+              }
 
 number:
   - platform: template
