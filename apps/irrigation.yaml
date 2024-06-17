@@ -2,7 +2,204 @@
 packages:
   common: !include ../common/common.yaml
   hardware: !include ../hardware/esp8266/sonoff-4ch-pro.yaml
-  
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [tasker]
+
+tasker:
+  schedules:
+    - id: schedule_zone2
+      days_of_week: 
+        name: ${zone2_name} Days
+        id: schedule_days_zone_2
+      times:
+        name: ${zone2_name} Times
+        id: schedule_times_zone_2
+      on_time:
+        then:
+          - logger.log: "SCHEDULE 2 TRIGGERED!!!"
+         
+esphome:
+  includes: apps/irrigation/scheduler.h
+
+globals:
+  - id: schedule_days
+    type: bool[7]
+    initial_value: "{false, false, false, false, false, false, false}"
+    restore_value: yes
+  - id: schedule_odd
+    type: bool
+    initial_value: "false"
+    restore_value: yes
+  - id: schedule_even
+    type: bool
+    initial_value: "false"
+    restore_value: yes
+  - id: schedule_zone_times
+    type: int16_t[4][5]
+    initial_value: "{{{-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1}}}"
+    
+number:
+  - platform: template
+    name: ${zone1_name} Duration
+    id: irrigation_zone1_duration
+    mode: slider
+    unit_of_measurement: s
+    icon: "mdi:timer-sand"
+    optimistic: true
+    initial_value: 0
+    restore_value: True
+    min_value: 0
+    max_value: 600
+    step: 30
+
+  - platform: template
+    name: ${zone2_name} Duration
+    id: irrigation_zone2_duration
+    mode: slider
+    unit_of_measurement: s
+    icon: "mdi:timer-sand"
+    optimistic: true
+    initial_value: 0
+    restore_value: True
+    min_value: 0
+    max_value: 600
+    step: 30
+
+  - platform: template
+    name: ${zone3_name} Duration
+    id: irrigation_zone3_duration
+    mode: slider
+    unit_of_measurement: s
+    icon: "mdi:timer-sand"
+    optimistic: true
+    initial_value: 0
+    restore_value: True
+    min_value: 0
+    max_value: 600
+    step: 30
+
+  - platform: template
+    name: ${zone4_name} Duration
+    id: irrigation_zone4_duration
+    mode: slider
+    unit_of_measurement: s
+    icon: "mdi:timer-sand"
+    optimistic: true
+    initial_value: 0
+    restore_value: True
+    min_value: 0
+    max_value: 600
+    step: 30
+    
+# TODO Add text sensor to repost if schedule is invalid?
+text_sensor:
+  # Home Assistant sensors for days and times
+  - platform: homeassistant
+    id: ui_days
+    entity_id: ${schedule_days_entity}
+    on_value:
+      then:
+        - lambda: |-
+            Irrigation::set_days_config(id(ui_days).state);
+
+            ESP_LOGD("main", "Days Schedule:");
+            for (int i = 0; i < sizeof(id(schedule_days)); i++) {
+              ESP_LOGD("main", "Day %d: %s", i, id(schedule_days)[i] ? "true" : "false");
+            }
+            ESP_LOGD("main", "Odd: %s", id(schedule_odd) ? "true" : "false");
+            ESP_LOGD("main", "Even: %s", id(schedule_even) ? "true" : "false");
+
+  - platform: homeassistant
+    id: ui_zone1_times
+    entity_id: ${schedule_zone1_times_entity}
+    on_value:
+      then:
+        - lambda: |-
+            ESP_LOGD("main", "New zone 1 times schedule: %s", id(ui_zone1_times).state.c_str());
+            Irrigation::set_zone_times_config(1, id(ui_zone1_times).state);
+            ESP_LOGD("main", "Zone 1 Time Schedule:");
+            for (int i = 0; i < 5; i++) {
+              ESP_LOGD("main", "[%d]: %d", i, id(schedule_zone_times)[0][i]);
+            }
+
+  - platform: homeassistant
+    id: ui_zone2_times
+    entity_id: ${schedule_zone2_times_entity}
+    on_value:
+      then:
+        - lambda: |-
+            ESP_LOGD("main", "New zone 2 times schedule: %s", id(ui_zone2_times).state.c_str());
+            Irrigation::set_zone_times_config(2, id(ui_zone2_times).state);
+            ESP_LOGD("main", "Zone 2 Time Schedule:");
+            for (int i = 0; i < 5; i++) {
+              ESP_LOGD("main", "[%d]: %d", i, id(schedule_zone_times)[1][i]);
+            }
+
+  - platform: homeassistant
+    id: ui_zone3_times
+    entity_id: ${schedule_zone3_times_entity}
+    on_value:
+      then:
+        - lambda: |-
+            ESP_LOGD("main", "New zone 3 times schedule: %s", id(ui_zone3_times).state.c_str());
+            Irrigation::set_zone_times_config(3, id(ui_zone3_times).state);
+            ESP_LOGD("main", "Zone 3 Time Schedule:");
+            for (int i = 0; i < 5; i++) {
+              ESP_LOGD("main", "[%d]: %d", i, id(schedule_zone_times)[2][i]);
+            }
+
+  - platform: homeassistant
+    id: ui_zone4_times
+    entity_id: ${schedule_zone4_times_entity}
+    on_value:
+      then:
+        - lambda: |-
+            ESP_LOGD("main", "New zone 4 times schedule: %s", id(ui_zone4_times).state.c_str());
+            Irrigation::set_zone_times_config(4, id(ui_zone4_times).state);
+            ESP_LOGD("main", "Zone 4 Time Schedule:");
+            for (int i = 0; i < 5; i++) {
+              ESP_LOGD("main", "[%d]: %d", i, id(schedule_zone_times)[3][i]);
+            }
+
+# Check the schedules every minute
+time:
+  - platform: sntp
+    id: !extend sntp_time
+    on_time:
+      - minutes: /1
+        seconds: 0
+        then:
+          - lambda: |-
+              if (id(sntp_time).now().is_valid()) {
+                // First check if we should run today at all
+                if (Irrigation::check_days_schedule(id(sntp_time))) {
+                  ESP_LOGD("main", "Day schedule match today.");
+                  // Then check the time for each zone
+                  for (int i = 1; i <= 4; i++) {
+                    if (Irrigation::check_zone_schedule(id(sntp_time), i)) {
+                      // Define an array of number pointers
+                      static number::Number* durations[] = {
+                        id(irrigation_zone1_duration),
+                        id(irrigation_zone2_duration),
+                        id(irrigation_zone3_duration),
+                        id(irrigation_zone4_duration)
+                      };
+
+                      // Get the duration for the specified zone
+                      float duration = durations[i - 1]->state;
+
+                      id(on_for_duration).execute(i, duration);
+                    }
+                  }
+                } else {
+                  ESP_LOGD("main", "Day schedule does not match today.");
+                }
+              }
+
 api:
   # Define a service to call the watering script from Home Assistant
   services:
@@ -29,6 +226,8 @@ script:
       relay_id: int
       duration: int
     then:
+      - lambda: |-
+          ESP_LOGD("main", "Opening value on zone %d for duration %d", relay_id, duration);
       - script.execute:
           id: watering_control
           relay_id: !lambda 'return relay_id;'
@@ -37,7 +236,7 @@ script:
       - script.execute:
           id: watering_control
           relay_id: !lambda 'return relay_id;'
-          state: False
+          state: false
 
     # Script to turn on or off specific relay
   - id: watering_control

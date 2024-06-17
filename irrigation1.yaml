@@ -1,6 +1,14 @@
 substitutions:
   node_name: irrigation1
-  friendly_node_name: Irrigation Terrace
-  prefix_name: "Irrigation"
+  friendly_node_name: Irrigation
+  zone1_name: Terrace
+  zone2_name: Zone 2
+  zone3_name: Zone 3
+  zone4_name: Zone 4
+  schedule_days_entity: input_text.irrigation_schedule_days
+  schedule_zone1_times_entity: input_text.irrigation_schedule_zone1_times
+  schedule_zone2_times_entity: input_text.irrigation_schedule_zone2_times
+  schedule_zone3_times_entity: input_text.irrigation_schedule_zone3_times
+  schedule_zone4_times_entity: input_text.irrigation_schedule_zone3_times
 
 <<: !include apps/irrigation.yaml

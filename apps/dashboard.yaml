@@ -1,0 +1,5 @@
+# Include common stuff
+packages:
+  common: !include ../common/common.yaml
+  hardware: !include ../hardware/esp32/waveshare-eink.yaml
+

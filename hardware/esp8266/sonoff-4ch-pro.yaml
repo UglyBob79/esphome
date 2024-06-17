@@ -7,10 +7,9 @@ esp8266:
   board: esp01_1m
   early_pin_init: False
 
-# TODO Probably remove prefix_name, it looks dumb
 binary_sensor:
   - platform: gpio
-    name: "${prefix_name} Button 1"
+    name: "Button 1"
     id: "button_1"
     pin:
       number: GPIO0
@@ -19,7 +18,7 @@ binary_sensor:
     on_press:
       - switch.toggle: "relay_1"
   - platform: gpio
-    name: "${prefix_name} Button 2"
+    name: "Button 2"
     id: "button_2"
     pin:
       number: GPIO9
@@ -28,7 +27,7 @@ binary_sensor:
     on_press:
       - switch.toggle: "relay_2"
   - platform: gpio
-    name: "${prefix_name} Button 3"
+    name: "Button 3"
     id: "button_3"
     pin:
       number: GPIO10
@@ -37,7 +36,7 @@ binary_sensor:
     on_press:
       - switch.toggle: "relay_3"
   - platform: gpio
-    name: "${prefix_name} Button 4"
+    name: "Button 4"
     id: "button_4"
     pin:
       number: GPIO14
@@ -48,22 +47,22 @@ binary_sensor:
 
 switch:
   - platform: gpio
-    name: "${prefix_name} Relay 1"
+    name: "Relay 1"
     id: "relay_1"        
     restore_mode: RESTORE_DEFAULT_OFF
     pin: GPIO12
   - platform: gpio
-    name: "${prefix_name} Relay 2"
+    name: "Relay 2"
     id: "relay_2"
     restore_mode: RESTORE_DEFAULT_OFF
     pin: GPIO5
   - platform: gpio
-    name: "${prefix_name} Relay 3"
+    name: "Relay 3"
     id: "relay_3"
     restore_mode: RESTORE_DEFAULT_OFF
     pin: GPIO4
   - platform: gpio
-    name: "${prefix_name} Relay 4"
+    name: "Relay 4"
     restore_mode: RESTORE_DEFAULT_OFF
     id: "relay_4"
     pin: GPIO15
