@@ -6,11 +6,21 @@
 namespace esphome {
 namespace tasker {
 
-static const char *TAG = "tasker";
+const char *Tasker::TAG = "tasker";
+const char *Schedule::TAG = "schedule";
 
 // Define a mapping from day strings to numerical values
 const std::unordered_map<std::string, int> day_mapping = {
-    {"MON", 0}, {"TUE", 1}, {"WED", 2}, {"THU", 3}, {"FRI", 4}, {"SAT", 5}, {"SUN", 6}, {"ODD", -1}, {"EVEN", -2}
+    {"MON", 0}, 
+    {"TUE", 1}, 
+    {"WED", 2}, 
+    {"THU", 3}, 
+    {"FRI", 4}, 
+    {"SAT", 5}, 
+    {"SUN", 6}, 
+    {"ODD", -1}, 
+    {"EVEN", -2}, 
+    {"ALL", -3}
 };
 
 void populate_days(Schedule& schedule, const std::vector<int> &day_values) {
@@ -22,6 +32,9 @@ void populate_days(Schedule& schedule, const std::vector<int> &day_values) {
         schedule.odd = true;
     } else if (day_values[0] == -2) {
         schedule.even = true;
+    } else if (day_values[0] == -3) {
+        // Set all days
+        schedule.days.raw = 0x7F;
     } else {
         for (int day : day_values) {
             // Set the corresponding bit
@@ -37,17 +50,17 @@ void Schedule::setup() {
 
 void Schedule::loop() {
     ESPTime time = this->parent_->time_->now();
+
+    if (!time.is_valid())
+        return;
+
     uint8_t curr_sec = time.second;
     
     if (curr_sec >= 0 && last_sec_ > curr_sec) {
-        // if (schedules_.size() > 0) {
-        //     schedules_[0]->dump();
-        // }
+        // we prefer mon-sun => 0-6
+        int day_of_week = (time.day_of_week + 5) % 7;
 
-        // ESP_LOGD(TAG, "timestamp: %d", time.timestamp);
-        // ESP_LOGD(TAG, "time: %02d:%02d:%02d", time.hour, time.minute, time.second);
-        
-        check_trigger(time.hour, time.minute);
+        check_trigger(day_of_week, time.hour, time.minute);
     }
     last_sec_ = curr_sec;
 }
@@ -57,38 +70,53 @@ void Schedule::dump_config() {
 }
 
 void Schedule::dump() const {
-    //ESP_LOGD("schedule", "Schedule ID: %s", get_id());
-    ESP_LOGD("schedule", "Days of Week: %s", days_of_week_text->state.c_str());
-    ESP_LOGD("schedule", "Odd: %d", odd);
-    ESP_LOGD("schedule", "Even: %d", even);
+    // TODO Add name param?
+    //ESP_LOGD(TAG, "Schedule ID: %s", get_id());
+    ESP_LOGD(TAG, "Days of Week: %s", days_of_week_text->state.c_str());
+    ESP_LOGD(TAG, "Odd: %d", odd);
+    ESP_LOGD(TAG, "Even: %d", even);
     // TODO loop and map
-    ESP_LOGD("schedule", "Mon: %d", days.day.mon);
-    ESP_LOGD("schedule", "Tue: %d", days.day.tue);
-    ESP_LOGD("schedule", "Wed: %d", days.day.wed);
-    ESP_LOGD("schedule", "Thu: %d", days.day.thu);
-    ESP_LOGD("schedule", "Fri: %d", days.day.fri);
-    ESP_LOGD("schedule", "Sat: %d", days.day.sat);
-    ESP_LOGD("schedule", "Sun: %d", days.day.sun);
-    ESP_LOGD("schedule", "Times: %s", times_text->state.c_str());
+    ESP_LOGD(TAG, "Mon: %d", days.day.mon);
+    ESP_LOGD(TAG, "Tue: %d", days.day.tue);
+    ESP_LOGD(TAG, "Wed: %d", days.day.wed);
+    ESP_LOGD(TAG, "Thu: %d", days.day.thu);
+    ESP_LOGD(TAG, "Fri: %d", days.day.fri);
+    ESP_LOGD(TAG, "Sat: %d", days.day.sat);
+    ESP_LOGD(TAG, "Sun: %d", days.day.sun);
+    ESP_LOGD(TAG, "Times: %s", times_text->state.c_str());
     for (int i = 0; i < time_cnt; i++) {
-         ESP_LOGD("schedule", "Time[%d]: %02d:%02d", i, time[i].hour, time[i].minute);
+         ESP_LOGD(TAG, "Time[%d]: %02d:%02d", i, time[i].hour, time[i].minute);
     }
 }
 
-void Schedule::check_trigger(uint8_t hour, uint8_t minute) {
+void Schedule::check_trigger(int day_of_week, uint8_t hour, uint8_t minute) {
+    if (check_day_of_week_match(day_of_week) && check_time_match(hour, minute)) {
+        ESP_LOGD(TAG, "Schedule has triggered!");
+        trigger_->trigger();
+    }
+}
+
+bool Schedule::check_day_of_week_match(int day_of_week) {
+        return (odd && day_of_week % 2 == 1) || 
+            (even && day_of_week % 2 == 0) ||
+            (1 << day_of_week) & days.raw;
+}
+
+bool Schedule::check_time_match(uint8_t hour, uint8_t minute) {
     for (Time& t : time) {
         // Check for matching trigger time
         if (t.hour == hour && t.minute == minute) {
-             ESP_LOGD(TAG, "Schedule has triggered!");
-             trigger_->trigger();
+            return true;
         }
     }
+    return false;
 }
 
 void Schedule::on_days_of_week_state_changed(const std::string& days_of_week) {
     ESP_LOGD(TAG, "Schedule days of week changed: %s", days_of_week.c_str());
 
     // parse the string
+    // TODO Ignore case
     std::vector<int> days;
     bool success = true;
     size_t pos = 0;
@@ -108,11 +136,11 @@ void Schedule::on_days_of_week_state_changed(const std::string& days_of_week) {
                 int start_value = start_it->second;
                 int end_value = end_it->second;
                 if (start_value < 0 || end_value < 0) {
-                    success = false; // ODD or EVEN can't be in ranges
+                    success = false; // ODD, EVEN or ALL can't be in ranges
                     break;
                 } else if (start_value < end_value) {
                     for (int day = start_value; day <= end_value; ++day) {
-                        ESP_LOGD("schedule", "Found day: %d", day);
+                        ESP_LOGD(TAG, "Found day: %d", day);
                         days.push_back(day);
                     }
                 } else {
@@ -126,8 +154,9 @@ void Schedule::on_days_of_week_state_changed(const std::string& days_of_week) {
         } else {  // Single day token
             auto it = day_mapping.find(token);
             if (it != day_mapping.end()) {
-                ESP_LOGD("schedule", "Found day: %d", it->second);
-                days.push_back(it->second);
+                int value = it->second;
+                ESP_LOGD(TAG, "Found day: %d", value);
+                days.push_back(value);
             } else {
                 success = false; // Invalid day name
                 break;
@@ -136,13 +165,13 @@ void Schedule::on_days_of_week_state_changed(const std::string& days_of_week) {
     }  
 
     if (days.size() > 1 && days[0] < 0) {
-         success = false; // ODD or EVEN can not be combined with other options
+         success = false; // ODD, EVEN or ALL can not be combined with other options
     }
 
     if (success) {
         populate_days(*this, days);
     } else {
-        ESP_LOGD("schedule", "Invalid format of days of week");
+        ESP_LOGD(TAG, "Invalid format of days of week");
         return;
     } 
 }
@@ -169,7 +198,7 @@ void Schedule::on_times_state_changed(const std::string& times) {
         int minute = std::stoi(token.substr(colon_pos + 1, 2));
 
         if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
-            ESP_LOGD("schedule", "Found time: %02d:%02d", hour, minute);
+            ESP_LOGD(TAG, "Found time: %02d:%02d", hour, minute);
             time_list.push_back(Time(hour, minute));
         } else {
             success = false; // Wrong time format
@@ -179,7 +208,7 @@ void Schedule::on_times_state_changed(const std::string& times) {
 
     if (success) {
         if (time_list.size() > TASKER_MAX_TIMES_CNT) {
-            ESP_LOGD("schedule", "Time list is too long, using first %d entries", TASKER_MAX_TIMES_CNT);
+            ESP_LOGD(TAG, "Time list is too long, using first %d entries", TASKER_MAX_TIMES_CNT);
             // TODO Report to user?
         }
 
@@ -200,7 +229,7 @@ void Schedule::on_times_state_changed(const std::string& times) {
             }
         }
     } else {
-        ESP_LOGD("schedule", "Invalid format of days of week");
+        ESP_LOGD(TAG, "Invalid format of days of week");
         // TODO Report to user
         return;
     }  
@@ -233,11 +262,10 @@ void TaskerText::setup() {
 }
 
 void TaskerText::control(const std::string& state) {
-    ESP_LOGD("control", "New state: %s", state.c_str());
-
     this->publish_state(state);
 
     // TODO Handle string too long
+    // TODO Save state in space optimized format
     // Need a buffer as the preferences expects a fixed size
     char buffer[TASKER_MAX_TEXT_LEN];
     strncpy(buffer, state.c_str(), sizeof(buffer));

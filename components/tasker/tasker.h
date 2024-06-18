@@ -43,15 +43,23 @@ struct Time {
 
 class Tasker {
  public:
+    static const char *TAG;
+    
+    /// Set the real time clock
     void set_time(time::RealTimeClock *time) { time_ = time; }
+
+    /// Get the real time clock
     time::RealTimeClock *get_time() const { return time_; }
     
+
     time::RealTimeClock *time_;
 };
 
 class Schedule : public Component, public Parented<Tasker> {
 // TODO Organize public/protected and later move out data to struct
 public:
+    static const char *TAG;
+
     Text* days_of_week_text;
     Text* times_text;
 
@@ -83,10 +91,14 @@ public:
     void dump_config() override;
 
     void dump() const;
-    void check_trigger(uint8_t hour, uint8_t minute);
 
+    /// Sets the days of week text component from yaml
     void set_days_of_week_text(Text* days_of_week_text);
+
+    /// Sets the times text component from yaml
     void set_times_text(Text* times_text);
+
+    /// Gets the trigger to connect it to yaml
     Trigger<> *get_trigger() const { return this->trigger_; }
 
 protected:
@@ -94,7 +106,10 @@ protected:
 
     void on_days_of_week_state_changed(const std::string& days_of_week);
     void on_times_state_changed(const std::string& times);
-    
+    void check_trigger(int day_of_week, uint8_t hour, uint8_t minute);
+    bool check_day_of_week_match(int day_of_week);
+    bool check_time_match(uint8_t hour, uint8_t minute);
+
     Trigger<> *trigger_ = new Trigger<>();
 };
 

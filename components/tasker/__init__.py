@@ -52,14 +52,11 @@ CONFIG_SCHEMA = cv.Schema(
 
 
 async def to_code(config):
-    print(config[CONF_ID])
     var = cg.new_Pvariable(config[CONF_ID])
     time_ = await cg.get_variable(config[CONF_TIME_ID])
     cg.add(var.set_time(time_))
-    print(config)
 
     for schedule_conf in config.get(CONF_SCHEDULES, []):
-        print(schedule_conf)
         schedule = cg.new_Pvariable(schedule_conf[CONF_ID])
         await cg.register_component(schedule, schedule_conf)
         await cg.register_parented(schedule, var)
@@ -72,7 +69,7 @@ async def to_code(config):
         await cg.register_component(times_text, schedule_conf.get(CONF_TIMES))
         cg.add(schedule.set_times_text(times_text))
 
-        if (CONF_ON_TIME in config):
+        if (CONF_ON_TIME in schedule_conf):
             await automation.build_automation(
-                schedule.get_trigger(), [], config[CONFIG_ON_TIME]
+                schedule.get_trigger(), [], schedule_conf[CONF_ON_TIME]
             )
