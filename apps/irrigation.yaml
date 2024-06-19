@@ -38,45 +38,49 @@ number:
     min_value: 0
     max_value: 600
     step: 30
+    internal: false
 
-  # - platform: template
-  #   name: ${zone2_name} Duration
-  #   id: irrigation_zone2_duration
-  #   mode: slider
-  #   unit_of_measurement: s
-  #   icon: "mdi:timer-sand"
-  #   optimistic: true
-  #   initial_value: 0
-  #   restore_value: True
-  #   min_value: 0
-  #   max_value: 600
-  #   step: 30
+  - platform: template
+    name: ${zone2_name} Duration
+    id: irrigation_zone2_duration
+    mode: slider
+    unit_of_measurement: s
+    icon: "mdi:timer-sand"
+    optimistic: true
+    initial_value: 0
+    restore_value: True
+    min_value: 0
+    max_value: 600
+    step: 30
+    internal: true # Not used
 
-  # - platform: template
-  #   name: ${zone3_name} Duration
-  #   id: irrigation_zone3_duration
-  #   mode: slider
-  #   unit_of_measurement: s
-  #   icon: "mdi:timer-sand"
-  #   optimistic: true
-  #   initial_value: 0
-  #   restore_value: True
-  #   min_value: 0
-  #   max_value: 600
-  #   step: 30
+  - platform: template
+    name: ${zone3_name} Duration
+    id: irrigation_zone3_duration
+    mode: slider
+    unit_of_measurement: s
+    icon: "mdi:timer-sand"
+    optimistic: true
+    initial_value: 0
+    restore_value: True
+    min_value: 0
+    max_value: 600
+    step: 30
+    internal: true # Not used
 
-  # - platform: template
-  #   name: ${zone4_name} Duration
-  #   id: irrigation_zone4_duration
-  #   mode: slider
-  #   unit_of_measurement: s
-  #   icon: "mdi:timer-sand"
-  #   optimistic: true
-  #   initial_value: 0
-  #   restore_value: True
-  #   min_value: 0
-  #   max_value: 600
-  #   step: 30
+  - platform: template
+    name: ${zone4_name} Duration
+    id: irrigation_zone4_duration
+    mode: slider
+    unit_of_measurement: s
+    icon: "mdi:timer-sand"
+    optimistic: true
+    initial_value: 0
+    restore_value: True
+    min_value: 0
+    max_value: 600
+    step: 30
+    internal: true # Not used
     
 api:
   # Define a service to call the watering script from Home Assistant

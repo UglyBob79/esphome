@@ -1,3 +1,6 @@
 /.esphome/
 /trash/
 secrets.yaml
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
