@@ -1,0 +1,53 @@
+esphome:
+  name: ${node_name}
+  friendly_name: ${friendly_node_name}
+  build_path: ./build/${node_name}
+  platformio_options:
+    board_build.mcu: esp32c3
+    board_build.variant: esp32c3
+
+esp32:
+  variant: ESP32C3
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_BT_BLE_50_FEATURES_SUPPORTED: y
+      CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
+binary_sensor:
+  - platform: gpio
+    id: push_button
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: true
+    internal: true
+    on_press:
+      - if:
+          condition:
+            switch.is_off: relay
+          then:
+            - switch.turn_on: blue_led
+            - switch.turn_on: relay
+          else:
+            - switch.turn_off: relay
+switch:
+  - platform: gpio
+    name: "Relay"
+    id: relay
+    pin: GPIO4
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_off:
+      - if:
+          condition:
+            switch.is_on: blue_led
+          then:
+            - switch.turn_off: blue_led
+
+  - platform: gpio
+    id: blue_led
+    pin:
+      number: GPIO6
+    inverted: true

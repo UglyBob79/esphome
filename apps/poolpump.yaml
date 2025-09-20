@@ -1,7 +1,7 @@
 # Include common stuff
 packages:
   common: !include ../common/common.yaml
-  hardware: !include ../hardware/esp8266/sonoff-basic-r2.yaml
+  hardware: !include ../hardware/esp32/sonoff-basic-r4.yaml
 
 esphome:
   includes: apps/poolpump/scheduler.h
@@ -74,4 +74,4 @@ switch:
     name: "Pump Enable"
     id: pump_enable
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF 
+    restore_mode: RESTORE_DEFAULT_OFF
