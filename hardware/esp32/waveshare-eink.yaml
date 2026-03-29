@@ -24,4 +24,4 @@ display:
     reset_duration: 2ms
     model: 7.50inV2
     update_interval: never
-    rotation: 90°
+    rotation: 0°

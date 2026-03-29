@@ -3,3 +3,22 @@ packages:
   common: !include ../common/common.yaml
   hardware: !include ../hardware/esp32/waveshare-eink.yaml
 
+online_image:
+  - url: "http://192.168.0.6:8123/local/eink_page0.png"
+    id: eink_page0
+    format: PNG
+    type: BINARY
+    on_download_finished:
+      then:
+        - component.update: eink_display
+    on_error:
+      then:
+        - logger.log:
+            level: WARN
+            format: "Failed to download eink image"
+
+display:
+  - platform: waveshare_epaper
+    id: !extend eink_display
+    lambda: |-
+      it.image(0, 0, id(eink_page0));
