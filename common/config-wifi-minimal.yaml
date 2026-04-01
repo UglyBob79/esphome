@@ -1,0 +1,7 @@
+# WiFi Configuration - minimal, no AP fallback or captive portal
+#
+# URL: https://esphome.io/components/wifi.html
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password

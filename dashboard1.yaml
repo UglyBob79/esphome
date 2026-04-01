@@ -2,26 +2,32 @@ substitutions:
   node_name: dashboard1
   friendly_node_name: Dashboard Livingroom
 
+external_components:
+  - source:
+      type: local
+      path: components
+
 <<: !include apps/dashboard.yaml
 
-esphome:
-  on_boot:
-    priority: -100.0   # run after wifi is up
+wifi:
+  on_connect:
     then:
-      - component.update: eink_page0
+      - delay: 5s
+      - script.execute: fetch_eink_image
 
 time:
   - platform: homeassistant
     id: homeassistant_time
+    timezone: "America/Mexico_City"
     on_time:
       - seconds: 0
         minutes: /2
         then:
-          - component.update: eink_page0
+          - script.execute: fetch_eink_image
 
 button:
   - platform: template
     name: "Dashboard - Refresh Screen"
     entity_category: config
     on_press:
-      - component.update: eink_page0
+      - script.execute: fetch_eink_image

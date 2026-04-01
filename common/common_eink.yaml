@@ -1,0 +1,17 @@
+# Common config for eink display devices
+# Strips captive portal, AP fallback, wifi-info sensors, and debug logging
+# to maximise available heap for image buffers
+<<: !include config-api.yaml
+<<: !include config-ota.yaml
+<<: !include config-wifi-minimal.yaml
+<<: !include config-time.yaml
+
+<<: !include sensor/connection-status.yaml
+<<: !include sensor/uptime.yaml
+<<: !include sensor/wifi-signal.yaml
+
+<<: !include button/restart.yaml
+<<: !include button/safe-mode.yaml
+
+logger:
+  level: WARN
