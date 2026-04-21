@@ -1,0 +1,76 @@
+id: page_actions
+bg_color: 0xFFFFFF
+on_load:
+  - lvgl.widget.focus: btn_action_first
+widgets:
+  - label:
+      align: TOP_MID
+      y: 12
+      text: "ACTIONS"
+      text_color: 0x000000
+      text_font: font_large
+  - obj:
+      align: TOP_MID
+      y: 48
+      width: 360
+      height: 2
+      bg_color: 0x000000
+      bg_opa: COVER
+      border_width: 0
+      pad_all: 0
+  - obj:
+      align: TOP_MID
+      y: 58
+      width: 360
+      height: 234
+      bg_opa: TRANSP
+      border_width: 0
+      pad_all: 0
+      scroll_dir: VER
+      layout:
+        type: FLEX
+        flex_flow: COLUMN
+        flex_align_cross: CENTER
+      widgets:
+        - button:
+            id: btn_action_first
+            width: 356
+            text: "Office fan"
+            text_font: font_large
+            text_color: 0x000000
+            bg_opa: TRANSP
+            border_width: 0
+            group: actions_group
+            focused:
+              bg_color: 0x000000
+              bg_opa: COVER
+              text_color: 0xFFFFFF
+            on_click:
+              - homeassistant.service:
+                  service: switch.toggle
+                  data:
+                    entity_id: switch.office_fan
+        - button:
+            width: 356
+            text: "Toggle kitchen light"
+            text_font: font_large
+            text_color: 0x000000
+            bg_opa: TRANSP
+            border_width: 0
+            group: actions_group
+            focused:
+              bg_color: 0x000000
+              bg_opa: COVER
+              text_color: 0xFFFFFF
+        - button:
+            width: 356
+            text: "Lock front door"
+            text_font: font_large
+            text_color: 0x000000
+            bg_opa: TRANSP
+            border_width: 0
+            group: actions_group
+            focused:
+              bg_color: 0x000000
+              bg_opa: COVER
+              text_color: 0xFFFFFF

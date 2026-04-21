@@ -1,0 +1,44 @@
+# Elecrow CrowPanel ESP32-S3 4.2" E-Paper HMI Display
+#
+# Hardware: ESP32-S3-WROOM-1-N8R8, SSD1683 e-paper 400x300
+# https://www.elecrow.com/wiki/CrowPanel_ESP32_E-paper_4.2-inch_HMI_Display.html
+esphome:
+  name: ${node_name}
+  friendly_name: ${friendly_node_name}
+  on_boot:
+    - priority: 600
+      then:
+        - switch.turn_on: epd_power
+        - delay: 500ms
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+switch:
+  - platform: gpio
+    pin: 7
+    id: epd_power
+    restore_mode: ALWAYS_ON
+    internal: true
+
+display:
+  - platform: crowpanel_epaper
+    id: epd
+    model: 4.20in
+    clk_pin: 12
+    mosi_pin: 11
+    cs_pin: 45
+    dc_pin: 46
+    reset_pin: 47
+    busy_pin: 48
+    invert_colors: true
+    rotation: 180
+    full_update_every: 9999
+    auto_clear_enabled: false
+    update_interval: never
