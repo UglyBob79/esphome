@@ -134,11 +134,9 @@ class ToggleInput : public BoundInput {
     // Track
     lv_obj_set_style_bg_color(this->sw_, lv_color_make(0, 0, 0), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(this->sw_, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(this->sw_, lv_color_make(0, 0, 0), LV_PART_MAIN);
-    lv_obj_set_style_border_width(this->sw_, 2, LV_PART_MAIN);
+    lv_obj_set_style_border_width(this->sw_, 0, LV_PART_MAIN);
     lv_obj_set_style_bg_color(this->sw_, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_CHECKED);
-    lv_obj_set_style_border_color(this->sw_, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_CHECKED);
-    lv_obj_set_style_border_width(this->sw_, 2, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_CHECKED);
+    lv_obj_set_style_border_width(this->sw_, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_CHECKED);
     // Indicator: invisible
     lv_obj_set_style_bg_opa(this->sw_, LV_OPA_TRANSP, LV_PART_INDICATOR);
     lv_obj_set_style_bg_opa(this->sw_, LV_OPA_TRANSP,
@@ -179,8 +177,9 @@ class ToggleInput : public BoundInput {
   bool is_activatable() const override { return true; }
 
   void set_focused(bool f) override {
-    lv_obj_set_style_border_width(this->sw_, f ? 4 : 2, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
-    lv_obj_set_style_border_color(this->sw_, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_width(this->sw_, f ? 3 : 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_color(this->sw_, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_pad(this->sw_, 2, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
   }
   void set_editing(bool) override {}
 
