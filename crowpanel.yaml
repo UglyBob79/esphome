@@ -5,23 +5,10 @@ substitutions:
 
 logger:
   level: VERY_VERBOSE
-  
+
 packages:
   common: !include ../esphome-common/common/common_eink.yaml
   hardware: !include ../esphome-common/hardware/esp32/crowpanel-4.2.yaml
-  poolpump_sensors: !include
-    file: crowpanel_pages/poolpump_schedule_sensors.yaml
-    vars:
-      entity_on_hour: number.poolpump1_pump_on_hour
-      entity_on_min: number.poolpump1_pump_on_minute
-      entity_off_hour: number.poolpump1_pump_off_hour
-      entity_off_min: number.poolpump1_pump_off_minute
-      entity_enable: switch.poolpump1_pump_enable
-      input_on_hour: pump_input_on_hour
-      input_on_min: pump_input_on_min
-      input_off_hour: pump_input_off_hour
-      input_off_min: pump_input_off_min
-      input_enable: pump_input_enable
 
 external_components:
   - source:
@@ -29,94 +16,42 @@ external_components:
       path: components
     components: [crowpanel_epaper, lvgl_form]
 
-lvgl_form:
-  id: form_poolpump
-
 globals:
   - id: first_render
     type: bool
     restore_value: false
     initial_value: 'true'
-  - id: pump_on_hour_val
-    type: int
-    restore_value: false
-    initial_value: '0'
-  - id: pump_on_min_val
-    type: int
-    restore_value: false
-    initial_value: '0'
-  - id: pump_off_hour_val
-    type: int
-    restore_value: false
-    initial_value: '0'
-  - id: pump_off_min_val
-    type: int
-    restore_value: false
-    initial_value: '0'
-  - id: pump_enable_val
-    type: bool
-    restore_value: false
-    initial_value: 'false'
-  - id: pump_input_on_hour
-    type: esphome::lvgl_form::NumberInput*
-    restore_value: false
-    initial_value: 'nullptr'
-  - id: pump_input_on_min
-    type: esphome::lvgl_form::NumberInput*
-    restore_value: false
-    initial_value: 'nullptr'
-  - id: pump_input_off_hour
-    type: esphome::lvgl_form::NumberInput*
-    restore_value: false
-    initial_value: 'nullptr'
-  - id: pump_input_off_min
-    type: esphome::lvgl_form::NumberInput*
-    restore_value: false
-    initial_value: 'nullptr'
-  - id: pump_input_enable
-    type: esphome::lvgl_form::ToggleInput*
-    restore_value: false
-    initial_value: 'nullptr'
 
-esphome:
-  on_boot:
-    priority: -200
-    then:
-      - lambda: |
-          using namespace esphome::lvgl_form;
-          auto* en   = new ToggleInput(id(switch_pump_enable));
-          en->set_value_ptr(&id(pump_enable_val));
-          en->set_ha_sensor(id(ha_pump_enable));
-          auto* onh  = new NumberInput(id(ticker_on_hour),  id(lbl_on_hour),  0, 23);
-          onh->set_value_ptr(&id(pump_on_hour_val));
-          onh->set_ha_sensor(id(ha_pump_on_hour));
-          auto* onm  = new NumberInput(id(ticker_on_min),   id(lbl_on_min),   0, 59);
-          onm->set_value_ptr(&id(pump_on_min_val));
-          onm->set_ha_sensor(id(ha_pump_on_min));
-          auto* offh = new NumberInput(id(ticker_off_hour), id(lbl_off_hour), 0, 23);
-          offh->set_value_ptr(&id(pump_off_hour_val));
-          offh->set_ha_sensor(id(ha_pump_off_hour));
-          auto* offm = new NumberInput(id(ticker_off_min),  id(lbl_off_min),  0, 59);
-          offm->set_value_ptr(&id(pump_off_min_val));
-          offm->set_ha_sensor(id(ha_pump_off_min));
-          auto* save = new ActionInput(id(btn_pump_save));
-          id(pump_input_enable)  = en;
-          id(pump_input_on_hour) = onh;
-          id(pump_input_on_min)  = onm;
-          id(pump_input_off_hour)= offh;
-          id(pump_input_off_min) = offm;
-          id(form_poolpump)->set_page(id(page_poolpump)->obj, id(actions_group));
-          id(form_poolpump)->add_input(en)
-                           .add_input(onh)
-                           .add_input(onm)
-                           .add_input(offh)
-                           .add_input(offm)
-                           .add_input(save);
-          en->sync_from_ha();
-          onh->sync_from_ha();
-          onm->sync_from_ha();
-          offh->sync_from_ha();
-          offm->sync_from_ha();
+lvgl_form:
+  - id: form_actions
+    type: panel
+    title: "ACTIONS"
+    font: font_large
+
+    rows:
+      - type: toggle
+        label: "Office fan"
+        entity: switch.office_fan
+
+  - id: form_poolpump
+    type: form
+    title: "POOL PUMP"
+    font: font_large
+
+    rows:
+      - type: toggle
+        label: "Enable"
+        entity: switch.poolpump1_pump_enable
+      - type: time
+        label: "On Time"
+        entity_hour: number.poolpump1_pump_on_hour
+        entity_minute: number.poolpump1_pump_on_minute
+      - type: time
+        label: "Off Time"
+        entity_hour: number.poolpump1_pump_off_hour
+        entity_minute: number.poolpump1_pump_off_minute
+    submit:
+      label: "SAVE"
 
 binary_sensor:
   - id: !extend btn_menu
@@ -135,29 +70,16 @@ binary_sensor:
 
   - id: !extend btn_confirm
     on_press:
-      - lambda: |
-          if (esphome::lvgl_form::FormPage::active)
-            esphome::lvgl_form::FormPage::active->on_confirm();
+      - lambda: 'auto* fp = esphome::lvgl_form::FormPage::active; if (fp) fp->on_confirm();'
 
   - id: !extend btn_rotary_up
     on_press:
-      - lambda: |
-          if (esphome::lvgl_form::FormPage::active)
-            esphome::lvgl_form::FormPage::active->on_up();
+      - lambda: 'auto* fp = esphome::lvgl_form::FormPage::active; if (fp) fp->on_up();'
 
   - id: !extend btn_rotary_down
     on_press:
-      - lambda: |
-          if (esphome::lvgl_form::FormPage::active)
-            esphome::lvgl_form::FormPage::active->on_down();
+      - lambda: 'auto* fp = esphome::lvgl_form::FormPage::active; if (fp) fp->on_down();'
 
-  - platform: homeassistant
-    id: office_fan_state
-    entity_id: switch.office_fan
-    on_state:
-      - lvgl.button.update:
-          id: btn_action_first
-          text: !lambda 'return std::string(x ? "Office fan  ON" : "Office fan  OFF");'
 
 sensor:
   - platform: homeassistant
@@ -234,13 +156,3 @@ lvgl:
   pages:
     - !include crowpanel_pages/home.yaml
     - !include crowpanel_pages/climate.yaml
-    - !include crowpanel_pages/actions.yaml
-    - !include
-        file: crowpanel_pages/poolpump_schedule.yaml
-        vars:
-          title: "POOL PUMP"
-          entity_on_hour: number.poolpump1_pump_on_hour
-          entity_on_min: number.poolpump1_pump_on_minute
-          entity_off_hour: number.poolpump1_pump_off_hour
-          entity_off_min: number.poolpump1_pump_off_minute
-          entity_enable: switch.poolpump1_pump_enable
