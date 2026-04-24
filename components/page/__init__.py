@@ -14,10 +14,11 @@ CODEOWNERS = []
 MULTI_CONF = True
 DEPENDENCIES = ["lvgl", "api", "font"]
 
-lvgl_form_ns = cg.esphome_ns.namespace("lvgl_form")
-FormPage = lvgl_form_ns.class_("FormPage", cg.Component)
+page_ns = cg.esphome_ns.namespace("page")
+Page = page_ns.class_("Page", cg.Component)
 
-CONF_PAGE_TYPE = "type"
+CONF_CONTENT = "content"
+CONF_CONTENT_TYPE = "type"
 CONF_TITLE = "title"
 CONF_FONT = "font"
 CONF_ROWS = "rows"
@@ -37,9 +38,9 @@ TOGGLE_ROW_SCHEMA = cv.Schema(
     }
 )
 
-TIME_ROW_SCHEMA = cv.Schema(
+TIME_INPUT_ROW_SCHEMA = cv.Schema(
     {
-        cv.Required(CONF_ROW_TYPE): cv.one_of("time", lower=True),
+        cv.Required(CONF_ROW_TYPE): cv.one_of("time_input", lower=True),
         cv.Required(CONF_LABEL): cv.string,
         cv.Required(CONF_ENTITY_HOUR): cv.entity_id,
         cv.Required(CONF_ENTITY_MINUTE): cv.entity_id,
@@ -53,29 +54,24 @@ def validate_row(value):
     t = value[CONF_ROW_TYPE]
     if t == "toggle":
         return TOGGLE_ROW_SCHEMA(value)
-    if t == "time":
-        return TIME_ROW_SCHEMA(value)
+    if t == "time_input":
+        return TIME_INPUT_ROW_SCHEMA(value)
     raise cv.Invalid(f"Unknown row type: '{t}'")
 
 
-def validate_page(config):
-    page_type = config[CONF_PAGE_TYPE]
-    if page_type == "form" and CONF_SUBMIT not in config:
-        raise cv.Invalid("type 'form' requires a 'submit' section")
-    if page_type == "panel" and CONF_SUBMIT in config:
-        raise cv.Invalid("type 'panel' does not use 'submit'")
+def validate_content(config):
+    content_type = config[CONF_CONTENT_TYPE]
+    if content_type == "form" and CONF_SUBMIT not in config:
+        raise cv.Invalid("content type 'form' requires a 'submit' section")
+    if content_type == "panel" and CONF_SUBMIT in config:
+        raise cv.Invalid("content type 'panel' does not use 'submit'")
     return config
 
 
-CONFIG_SCHEMA = cv.All(
+CONTENT_SCHEMA = cv.All(
     cv.Schema(
         {
-            cv.GenerateID(): cv.declare_id(FormPage),
-            cv.GenerateID(CONF_PAGE_ID): cv.declare_id(lv_page_t),
-            cv.GenerateID(CONF_LVGL_ID): cv.use_id(LvglComponent),
-            cv.Required(CONF_PAGE_TYPE): cv.one_of("form", "panel", lower=True),
-            cv.Required(CONF_TITLE): cv.string,
-            cv.Required(CONF_FONT): cv.use_id(Font),
+            cv.Required(CONF_CONTENT_TYPE): cv.one_of("form", "panel", lower=True),
             cv.Required(CONF_ROWS): cv.ensure_list(validate_row),
             cv.Optional(CONF_SUBMIT): cv.Schema(
                 {
@@ -83,9 +79,20 @@ CONFIG_SCHEMA = cv.All(
                 }
             ),
         }
-    ).extend(cv.COMPONENT_SCHEMA),
-    validate_page,
+    ),
+    validate_content,
 )
+
+CONFIG_SCHEMA = cv.Schema(
+    {
+        cv.GenerateID(): cv.declare_id(Page),
+        cv.GenerateID(CONF_PAGE_ID): cv.declare_id(lv_page_t),
+        cv.GenerateID(CONF_LVGL_ID): cv.use_id(LvglComponent),
+        cv.Required(CONF_TITLE): cv.string,
+        cv.Required(CONF_FONT): cv.use_id(Font),
+        cv.Required(CONF_CONTENT): CONTENT_SCHEMA,
+    }
+).extend(cv.COMPONENT_SCHEMA)
 
 
 async def to_code(config):
@@ -102,20 +109,22 @@ async def to_code(config):
 
     cg.add(var.set_title(config[CONF_TITLE]))
 
-    for row in config[CONF_ROWS]:
+    content = config[CONF_CONTENT]
+    for row in content[CONF_ROWS]:
         row_type = row[CONF_ROW_TYPE]
         if row_type == "toggle":
             cg.add(var.add_toggle_row(row[CONF_LABEL], row[CONF_ENTITY]))
-        elif row_type == "time":
+        elif row_type == "time_input":
             cg.add(
-                var.add_time_row(
+                var.add_time_input_row(
                     row[CONF_LABEL],
                     row[CONF_ENTITY_HOUR],
                     row[CONF_ENTITY_MINUTE],
                 )
             )
 
-    if CONF_SUBMIT in config:
-        cg.add(var.set_submit_label(config[CONF_SUBMIT][CONF_LABEL]))
+    if CONF_SUBMIT in content:
+        cg.add(var.set_submit_label(content[CONF_SUBMIT][CONF_LABEL]))
+
     cg.add_define("USE_API_HOMEASSISTANT_STATES")
     cg.add_define("USE_API_HOMEASSISTANT_SERVICES")

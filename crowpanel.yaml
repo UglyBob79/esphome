@@ -9,49 +9,19 @@ logger:
 packages:
   common: !include ../esphome-common/common/common_eink.yaml
   hardware: !include ../esphome-common/hardware/esp32/crowpanel-4.2.yaml
+  pages: !include crowpanel_pages.yaml
 
 external_components:
   - source:
       type: local
       path: components
-    components: [crowpanel_epaper, lvgl_form]
+    components: [crowpanel_epaper, page]
 
 globals:
   - id: first_render
     type: bool
     restore_value: false
     initial_value: 'true'
-
-lvgl_form:
-  - id: form_actions
-    type: panel
-    title: "ACTIONS"
-    font: font_large
-
-    rows:
-      - type: toggle
-        label: "Office fan"
-        entity: switch.office_fan
-
-  - id: form_poolpump
-    type: form
-    title: "POOL PUMP"
-    font: font_large
-
-    rows:
-      - type: toggle
-        label: "Enable"
-        entity: switch.poolpump1_pump_enable
-      - type: time
-        label: "On Time"
-        entity_hour: number.poolpump1_pump_on_hour
-        entity_minute: number.poolpump1_pump_on_minute
-      - type: time
-        label: "Off Time"
-        entity_hour: number.poolpump1_pump_off_hour
-        entity_minute: number.poolpump1_pump_off_minute
-    submit:
-      label: "SAVE"
 
 binary_sensor:
   - id: !extend btn_menu
@@ -70,15 +40,15 @@ binary_sensor:
 
   - id: !extend btn_confirm
     on_press:
-      - lambda: 'auto* fp = esphome::lvgl_form::FormPage::active; if (fp) fp->on_confirm();'
+      - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_confirm();'
 
   - id: !extend btn_rotary_up
     on_press:
-      - lambda: 'auto* fp = esphome::lvgl_form::FormPage::active; if (fp) fp->on_up();'
+      - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_up();'
 
   - id: !extend btn_rotary_down
     on_press:
-      - lambda: 'auto* fp = esphome::lvgl_form::FormPage::active; if (fp) fp->on_down();'
+      - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_down();'
 
 
 sensor:

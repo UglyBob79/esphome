@@ -1,0 +1,18 @@
+title: "POOL PUMP"
+font: ${page_font}
+content:
+  type: form
+  rows:
+    - type: toggle
+      label: "Enable"
+      entity: switch.poolpump1_pump_enable
+    - type: time_input
+      label: "On Time"
+      entity_hour: number.poolpump1_pump_on_hour
+      entity_minute: number.poolpump1_pump_on_minute
+    - type: time_input
+      label: "Off Time"
+      entity_hour: number.poolpump1_pump_off_hour
+      entity_minute: number.poolpump1_pump_off_minute
+  submit:
+    label: "SAVE"

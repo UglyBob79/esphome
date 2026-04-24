@@ -1,0 +1,8 @@
+title: "ACTIONS"
+font: ${page_font}
+content:
+  type: panel
+  rows:
+    - type: toggle
+      label: "Office fan"
+      entity: switch.office_fan

@@ -8,10 +8,10 @@
 #include <lvgl.h>
 #include <vector>
 
-static const char *const LVGL_FORM_TAG = "lvgl_form";
+static const char *const PAGE_TAG = "page";
 
 namespace esphome {
-namespace lvgl_form {
+namespace page {
 
 // ---------------------------------------------------------------------------
 // BoundInput — base class for a form field
@@ -215,16 +215,16 @@ class ToggleInput : public BoundInput {
 };
 
 // ---------------------------------------------------------------------------
-// Forward declare FormPage so ActionInput can reference it
+// Forward declare Page so ActionInput can reference it
 // ---------------------------------------------------------------------------
-class FormPage;
+class Page;
 
 // ---------------------------------------------------------------------------
-// ActionInput — submit button that calls FormPage::on_submit()
+// ActionInput — submit button that calls Page::on_submit()
 // ---------------------------------------------------------------------------
 class ActionInput : public BoundInput {
  public:
-  explicit ActionInput(lv_obj_t *btn, FormPage *form) : btn_(btn), form_(form) {}
+  explicit ActionInput(lv_obj_t *btn, Page *page) : btn_(btn), page_(page) {}
 
   void sync_from_cache() override {}
   bool is_activatable() const override { return true; }
@@ -242,20 +242,20 @@ class ActionInput : public BoundInput {
 
  protected:
   lv_obj_t *btn_;
-  FormPage *form_;
+  Page *page_;
 };
 
 // ---------------------------------------------------------------------------
 // Row definitions — built from Python config, consumed in build_ui()
 // ---------------------------------------------------------------------------
-enum class RowType : uint8_t { TOGGLE, TIME };
+enum class RowType : uint8_t { TOGGLE, TIME_INPUT };
 
 struct ToggleRowDef {
   const char *label;
   const char *entity_id;
 };
 
-struct TimeRowDef {
+struct TimeInputRowDef {
   const char *label;
   const char *entity_hour_id;
   const char *entity_min_id;
@@ -264,15 +264,15 @@ struct TimeRowDef {
 struct RowDef {
   RowType type;
   ToggleRowDef toggle{};
-  TimeRowDef time{};
+  TimeInputRowDef time_input{};
 };
 
 // ---------------------------------------------------------------------------
-// FormPage — owns the form, builds LVGL UI, manages encoder and navigation
+// Page — owns the form, builds LVGL UI, manages encoder and navigation
 // ---------------------------------------------------------------------------
-class FormPage : public esphome::Component {
+class Page : public esphome::Component {
  public:
-  static FormPage *active;
+  static Page *active;
 
   void set_page_obj(lv_obj_t *obj) { this->page_obj_ = obj; }
   void set_title(const char *title) { this->title_ = title; }
@@ -286,10 +286,10 @@ class FormPage : public esphome::Component {
     this->rows_.push_back(r);
   }
 
-  void add_time_row(const char *label, const char *entity_hour_id, const char *entity_min_id) {
+  void add_time_input_row(const char *label, const char *entity_hour_id, const char *entity_min_id) {
     RowDef r;
-    r.type = RowType::TIME;
-    r.time = {label, entity_hour_id, entity_min_id};
+    r.type = RowType::TIME_INPUT;
+    r.time_input = {label, entity_hour_id, entity_min_id};
     this->rows_.push_back(r);
   }
 
@@ -297,6 +297,9 @@ class FormPage : public esphome::Component {
     this->build_ui();
     for (auto *inp : this->inputs_)
       inp->subscribe_ha_state();
+    // SCREEN_LOADED may have fired before setup() on the first page; apply focus now if so
+    if (this->page_active_)
+      this->apply_page_active_state_();
   }
   void loop() override {}
   float get_setup_priority() const override { return esphome::setup_priority::LATE; }
@@ -321,13 +324,14 @@ class FormPage : public esphome::Component {
   bool editing_{false};
 
   void build_ui();
+  void apply_page_active_state_();
   lv_obj_t *make_ticker_box(lv_obj_t *parent, int x, int y, lv_obj_t **label_out);
 
   static void on_load_event_(lv_event_t *e) {
-    static_cast<FormPage *>(lv_event_get_user_data(e))->on_page_load();
+    static_cast<Page *>(lv_event_get_user_data(e))->on_page_load();
   }
   static void on_unload_event_(lv_event_t *e) {
-    static_cast<FormPage *>(lv_event_get_user_data(e))->on_page_unload();
+    static_cast<Page *>(lv_event_get_user_data(e))->on_page_unload();
   }
 
   void focus(size_t idx) {
@@ -343,5 +347,5 @@ class FormPage : public esphome::Component {
   }
 };
 
-}  // namespace lvgl_form
+}  // namespace page
 }  // namespace esphome
