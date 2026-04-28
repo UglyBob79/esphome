@@ -215,6 +215,49 @@ class ToggleInput : public BoundInput {
 };
 
 // ---------------------------------------------------------------------------
+// SensorLabel — display-only label that subscribes to a HA sensor entity
+// ---------------------------------------------------------------------------
+class SensorLabel : public BoundInput {
+ public:
+  SensorLabel(lv_obj_t *label, const char *format) : label_(label), format_(format) {}
+
+  void set_entity_id(const char *entity_id) { this->entity_id_ = entity_id; }
+
+  void subscribe_ha_state() override {
+    if (!this->entity_id_ || !api::global_api_server)
+      return;
+    api::global_api_server->subscribe_home_assistant_state(
+        this->entity_id_, nullptr, [this](StringRef state) {
+          auto val = parse_number<float>(state.c_str());
+          if (val.has_value()) {
+            this->ha_value_ = *val;
+            this->has_value_ = true;
+          }
+          if (this->page_active_ && *this->page_active_)
+            this->sync_from_cache();
+        });
+  }
+
+  void sync_from_cache() override {
+    if (!this->has_value_)
+      return;
+    char buf[64];
+    snprintf(buf, sizeof(buf), this->format_, this->ha_value_);
+    lv_label_set_text(this->label_, buf);
+  }
+
+  void set_focused(bool) override {}
+  void set_editing(bool) override {}
+
+ protected:
+  lv_obj_t *label_;
+  const char *format_;
+  const char *entity_id_{nullptr};
+  float ha_value_{0.0f};
+  bool has_value_{false};
+};
+
+// ---------------------------------------------------------------------------
 // Forward declare Page so ActionInput can reference it
 // ---------------------------------------------------------------------------
 class Page;
@@ -248,7 +291,7 @@ class ActionInput : public BoundInput {
 // ---------------------------------------------------------------------------
 // Row definitions — built from Python config, consumed in build_ui()
 // ---------------------------------------------------------------------------
-enum class RowType : uint8_t { TOGGLE, TIME_INPUT };
+enum class RowType : uint8_t { TOGGLE, TIME_INPUT, SENSOR, LABEL };
 
 struct ToggleRowDef {
   const char *label;
@@ -261,10 +304,21 @@ struct TimeInputRowDef {
   const char *entity_min_id;
 };
 
+struct SensorRowDef {
+  const char *entity_id;
+  const char *format;
+};
+
+struct LabelRowDef {
+  const char *text;
+};
+
 struct RowDef {
   RowType type;
   ToggleRowDef toggle{};
   TimeInputRowDef time_input{};
+  SensorRowDef sensor{};
+  LabelRowDef label_row{};
 };
 
 // ---------------------------------------------------------------------------
@@ -290,6 +344,20 @@ class Page : public esphome::Component {
     RowDef r;
     r.type = RowType::TIME_INPUT;
     r.time_input = {label, entity_hour_id, entity_min_id};
+    this->rows_.push_back(r);
+  }
+
+  void add_sensor_row(const char *entity_id, const char *format) {
+    RowDef r;
+    r.type = RowType::SENSOR;
+    r.sensor = {entity_id, format};
+    this->rows_.push_back(r);
+  }
+
+  void add_label_row(const char *text) {
+    RowDef r;
+    r.type = RowType::LABEL;
+    r.label_row = {text};
     this->rows_.push_back(r);
   }
 
@@ -325,7 +393,7 @@ class Page : public esphome::Component {
 
   void build_ui();
   void apply_page_active_state_();
-  lv_obj_t *make_ticker_box(lv_obj_t *parent, int x, int y, lv_obj_t **label_out);
+  lv_obj_t *make_ticker_box(lv_obj_t *parent, lv_obj_t **label_out);
 
   static void on_load_event_(lv_event_t *e) {
     static_cast<Page *>(lv_event_get_user_data(e))->on_page_load();

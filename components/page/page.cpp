@@ -10,18 +10,16 @@ void ActionInput::activate() { this->page_->on_submit(); }
 static constexpr int PAGE_WIDTH = 400;
 static constexpr int DIVIDER_Y = 48;
 static constexpr int ROW_START_Y = 62;
-static constexpr int ROW_STEP = 58;
 static constexpr int ROW_H = 38;
+static constexpr int ROW_GAP = 20;
+static constexpr int ROW_STEP = ROW_H + ROW_GAP;
 static constexpr int TICKER_W = 72;
-static constexpr int TICKER_HOUR_X = 185;
-static constexpr int COLON_X = 261;
-static constexpr int TICKER_MIN_X = 277;
 static constexpr int SWITCH_W = 60;
 static constexpr int SWITCH_H = 30;
+static constexpr int CONTENT_PAD = 20;
 
-lv_obj_t *Page::make_ticker_box(lv_obj_t *parent, int x, int y, lv_obj_t **label_out) {
+lv_obj_t *Page::make_ticker_box(lv_obj_t *parent, lv_obj_t **label_out) {
   lv_obj_t *box = lv_obj_create(parent);
-  lv_obj_set_pos(box, x, y);
   lv_obj_set_size(box, TICKER_W, ROW_H);
   lv_obj_set_style_bg_color(box, lv_color_make(255, 255, 255), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(box, LV_OPA_COVER, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
@@ -41,6 +39,17 @@ lv_obj_t *Page::make_ticker_box(lv_obj_t *parent, int x, int y, lv_obj_t **label
 
   *label_out = lbl;
   return box;
+}
+
+static lv_obj_t *make_row_container(lv_obj_t *col) {
+  lv_obj_t *cont = lv_obj_create(col);
+  lv_obj_set_size(cont, PAGE_WIDTH, ROW_H);
+  lv_obj_set_style_bg_opa(cont, LV_OPA_TRANSP, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(cont, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_all(cont, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+  lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
+  // No layout — children positioned with lv_obj_align, not flex
+  return cont;
 }
 
 void Page::build_ui() {
@@ -67,20 +76,35 @@ void Page::build_ui() {
   lv_obj_set_style_border_width(divider, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
   lv_obj_set_style_pad_all(divider, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
 
-  // Rows
-  int row_y = ROW_START_Y;
+  // Flex column — vertical stacking only; fixed height avoids LV_SIZE_CONTENT cascade
+  int n = (int)this->rows_.size();
+  int col_h = n * ROW_H + (n > 0 ? (n - 1) * ROW_GAP : 0);
+  lv_obj_t *col = lv_obj_create(this->page_obj_);
+  lv_obj_set_pos(col, 0, ROW_START_Y);
+  lv_obj_set_size(col, PAGE_WIDTH, col_h);
+  lv_obj_set_style_bg_opa(col, LV_OPA_TRANSP, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(col, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_all(col, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_row(col, ROW_GAP, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+  lv_obj_clear_flag(col, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_layout(col, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(col, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(col, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
   for (auto &row : this->rows_) {
     if (row.type == RowType::TOGGLE) {
-      lv_obj_t *lbl = lv_label_create(this->page_obj_);
-      lv_obj_set_pos(lbl, 20, row_y + 5);
+      lv_obj_t *cont = make_row_container(col);
+
+      lv_obj_t *lbl = lv_label_create(cont);
+      lv_obj_align(lbl, LV_ALIGN_LEFT_MID, CONTENT_PAD, 0);
       lv_label_set_text(lbl, row.toggle.label);
       if (this->font_)
         lv_obj_set_style_text_font(lbl, this->font_, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
       lv_obj_set_style_text_color(lbl, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
 
-      lv_obj_t *sw = lv_switch_create(this->page_obj_);
-      lv_obj_set_pos(sw, PAGE_WIDTH - 20 - SWITCH_W, row_y + 4);
+      lv_obj_t *sw = lv_switch_create(cont);
       lv_obj_set_size(sw, SWITCH_W, SWITCH_H);
+      lv_obj_align(sw, LV_ALIGN_RIGHT_MID, -CONTENT_PAD, 0);
       lv_group_remove_obj(sw);
 
       auto *inp = new ToggleInput(sw);
@@ -89,26 +113,34 @@ void Page::build_ui() {
       this->inputs_.push_back(inp);
 
     } else if (row.type == RowType::TIME_INPUT) {
-      lv_obj_t *lbl = lv_label_create(this->page_obj_);
-      lv_obj_set_pos(lbl, 20, row_y + 5);
+      lv_obj_t *cont = make_row_container(col);
+
+      lv_obj_t *lbl = lv_label_create(cont);
+      lv_obj_align(lbl, LV_ALIGN_LEFT_MID, CONTENT_PAD, 0);
       lv_label_set_text(lbl, row.time_input.label);
       if (this->font_)
         lv_obj_set_style_text_font(lbl, this->font_, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
       lv_obj_set_style_text_color(lbl, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
 
+      // [HH] : [MM] right-aligned via lv_obj_align, no nested flex
+      int m_x = PAGE_WIDTH - CONTENT_PAD - TICKER_W;  // 308
+      int h_x = m_x - 16 - TICKER_W;                  // 220
+
       lv_obj_t *h_lbl = nullptr;
-      lv_obj_t *h_box = this->make_ticker_box(this->page_obj_, TICKER_HOUR_X, row_y, &h_lbl);
+      lv_obj_t *h_box = this->make_ticker_box(cont, &h_lbl);
+      lv_obj_set_pos(h_box, h_x, 0);
       lv_group_remove_obj(h_box);
 
-      lv_obj_t *colon = lv_label_create(this->page_obj_);
-      lv_obj_set_pos(colon, COLON_X, row_y + 5);
+      lv_obj_t *colon = lv_label_create(cont);
+      lv_obj_set_pos(colon, h_x + TICKER_W + 3, 5);
       lv_label_set_text(colon, ":");
       if (this->font_)
         lv_obj_set_style_text_font(colon, this->font_, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
       lv_obj_set_style_text_color(colon, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
 
       lv_obj_t *m_lbl = nullptr;
-      lv_obj_t *m_box = this->make_ticker_box(this->page_obj_, TICKER_MIN_X, row_y, &m_lbl);
+      lv_obj_t *m_box = this->make_ticker_box(cont, &m_lbl);
+      lv_obj_set_pos(m_box, m_x, 0);
       lv_group_remove_obj(m_box);
 
       auto *h_inp = new NumberInput(h_box, h_lbl, 0, 23);
@@ -121,9 +153,30 @@ void Page::build_ui() {
 
       this->inputs_.push_back(h_inp);
       this->inputs_.push_back(m_inp);
-    }
 
-    row_y += ROW_STEP;
+    } else if (row.type == RowType::SENSOR) {
+      lv_obj_t *lbl = lv_label_create(col);
+      lv_obj_set_size(lbl, PAGE_WIDTH, ROW_H);
+      lv_label_set_text(lbl, "---");
+      lv_obj_set_style_text_align(lbl, LV_TEXT_ALIGN_CENTER, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      if (this->font_)
+        lv_obj_set_style_text_font(lbl, this->font_, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(lbl, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+
+      auto *inp = new SensorLabel(lbl, row.sensor.format);
+      inp->set_entity_id(row.sensor.entity_id);
+      inp->set_page_active_ptr(&this->page_active_);
+      this->inputs_.push_back(inp);
+
+    } else if (row.type == RowType::LABEL) {
+      lv_obj_t *lbl = lv_label_create(col);
+      lv_obj_set_size(lbl, PAGE_WIDTH, ROW_H);
+      lv_label_set_text(lbl, row.label_row.text ? row.label_row.text : "");
+      lv_obj_set_style_text_align(lbl, LV_TEXT_ALIGN_CENTER, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      if (this->font_)
+        lv_obj_set_style_text_font(lbl, this->font_, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(lbl, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+    }
   }
 
   if (this->submit_label_) {
@@ -170,8 +223,6 @@ void Page::apply_page_active_state_() {
 }
 
 void Page::on_page_unload() {
-  // Guard: LVGL fires SCREEN_LOADED on the incoming page before SCREEN_UNLOADED on us,
-  // so active may already point to the new page by the time we get here.
   if (Page::active == this)
     Page::active = nullptr;
   this->page_active_ = false;

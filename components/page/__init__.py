@@ -8,7 +8,7 @@ from esphome.components.lvgl.defines import CONF_LVGL_ID
 from esphome.components.font import Font
 
 add_lv_use("switch")
-add_lv_use("btn")
+add_lv_use("flex")
 
 CODEOWNERS = []
 MULTI_CONF = True
@@ -27,6 +27,8 @@ CONF_LABEL = "label"
 CONF_ENTITY = "entity"
 CONF_ENTITY_HOUR = "entity_hour"
 CONF_ENTITY_MINUTE = "entity_minute"
+CONF_FORMAT = "format"
+CONF_TEXT = "text"
 CONF_SUBMIT = "submit"
 CONF_PAGE_ID = "page_id"
 
@@ -47,6 +49,21 @@ TIME_INPUT_ROW_SCHEMA = cv.Schema(
     }
 )
 
+SENSOR_ROW_SCHEMA = cv.Schema(
+    {
+        cv.Required(CONF_ROW_TYPE): cv.one_of("sensor", lower=True),
+        cv.Required(CONF_ENTITY): cv.entity_id,
+        cv.Required(CONF_FORMAT): cv.string,
+    }
+)
+
+LABEL_ROW_SCHEMA = cv.Schema(
+    {
+        cv.Required(CONF_ROW_TYPE): cv.one_of("label", lower=True),
+        cv.Required(CONF_TEXT): cv.string,
+    }
+)
+
 
 def validate_row(value):
     if not isinstance(value, dict) or CONF_ROW_TYPE not in value:
@@ -56,6 +73,10 @@ def validate_row(value):
         return TOGGLE_ROW_SCHEMA(value)
     if t == "time_input":
         return TIME_INPUT_ROW_SCHEMA(value)
+    if t == "sensor":
+        return SENSOR_ROW_SCHEMA(value)
+    if t == "label":
+        return LABEL_ROW_SCHEMA(value)
     raise cv.Invalid(f"Unknown row type: '{t}'")
 
 
@@ -122,6 +143,10 @@ async def to_code(config):
                     row[CONF_ENTITY_MINUTE],
                 )
             )
+        elif row_type == "sensor":
+            cg.add(var.add_sensor_row(row[CONF_ENTITY], row[CONF_FORMAT]))
+        elif row_type == "label":
+            cg.add(var.add_label_row(row[CONF_TEXT]))
 
     if CONF_SUBMIT in content:
         cg.add(var.set_submit_label(content[CONF_SUBMIT][CONF_LABEL]))
