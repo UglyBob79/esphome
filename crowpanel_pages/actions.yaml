@@ -6,3 +6,6 @@ content:
     - type: toggle
       label: "Office fan"
       entity: switch.office_fan
+    - type: toggle
+      label: "Pool pump"
+      entity: switch.poolpump1_relay
