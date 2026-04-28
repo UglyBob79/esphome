@@ -1,0 +1,17 @@
+title: "POWER"
+font: ${page_font}
+content:
+  type: panel
+  rows:
+    - type: sensor
+      entity: sensor.victron_mqtt_system_0_system_dc_pv_power
+      format: "Solar:    %6.0f W"
+    - type: sensor
+      entity: sensor.victron_mqtt_system_0_system_dc_battery_soc
+      format: "Battery:  %6.0f %%"
+    - type: sensor
+      entity: sensor.victron_consumption
+      format: "Load:     %6.0f W"
+    - type: sensor
+      entity: sensor.victron_grid_power
+      format: "Grid:     %+6.0f W"

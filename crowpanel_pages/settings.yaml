@@ -1,0 +1,7 @@
+title: "SETTINGS"
+font: ${page_font}
+content:
+  type: panel
+  rows:
+    - type: label
+      text: "Settings"

@@ -7,3 +7,11 @@ page:
     file: crowpanel_pages/poolpump.yaml
     vars:
       page_font: font_large
+  - !include
+    file: crowpanel_pages/power.yaml
+    vars:
+      page_font: font_large
+  - !include
+    file: crowpanel_pages/settings.yaml
+    vars:
+      page_font: font_large
