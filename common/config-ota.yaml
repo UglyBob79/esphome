@@ -2,4 +2,5 @@
 #
 # URL: https://esphome.io/components/ota.html
 ota:
-  password: !secret ota_password
+  - platform: esphome
+    password: !secret ota_password

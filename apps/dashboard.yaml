@@ -6,11 +6,28 @@ esphome:
   includes:
     - apps/dashboard/eink_fetcher.h
 
+globals:
+  - id: eink_page_index
+    type: int
+    restore_value: false
+    initial_value: '0'
+
 script:
   - id: fetch_eink_image
     then:
       - lambda: |-
-          eink_fetch("homeassistant.local", 8123, "/local/eink_page0.bin");
+          // Try the next page. If the fetch fails (short read = file missing),
+          // wrap back to page 0. Page count is implicitly whatever AppDaemon
+          // generated — nothing to hardcode here.
+          char path[48];
+          int next = id(eink_page_index) + 1;
+          snprintf(path, sizeof(path), "/local/eink_page%d.bin", next);
+          if (eink_fetch("homeassistant.local", 8123, path)) {
+            id(eink_page_index) = next;
+          } else {
+            eink_fetch("homeassistant.local", 8123, "/local/eink_page0.bin");
+            id(eink_page_index) = 0;
+          }
       - component.update: eink_display
 
 display:
