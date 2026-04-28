@@ -127,7 +127,7 @@ void Page::build_ui() {
   }
 
   if (this->submit_label_) {
-    lv_obj_t *btn = lv_btn_create(this->page_obj_);
+    lv_obj_t *btn = lv_obj_create(this->page_obj_);
     lv_group_remove_obj(btn);
     lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -15);
     lv_obj_set_size(btn, 160, 44);

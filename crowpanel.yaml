@@ -78,6 +78,8 @@ lvgl:
   displays: epd
   buffer_size: 25%
   color_depth: 16
+  rotation: 180
+  anim_time: 0ms
   theme:
     button:
       bg_opa: TRANSP
