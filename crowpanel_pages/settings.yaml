@@ -3,5 +3,6 @@ font: ${page_font}
 content:
   type: panel
   rows:
-    - type: label
-      text: "Settings"
+    - type: toggle
+      label: "Guest mode"
+      entity: input_boolean.guest_mode

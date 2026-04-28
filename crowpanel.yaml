@@ -127,4 +127,3 @@ lvgl:
     - component.update: epd
   pages:
     - !include crowpanel_pages/home.yaml
-    - !include crowpanel_pages/climate.yaml
