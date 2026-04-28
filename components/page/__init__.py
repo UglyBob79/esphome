@@ -64,6 +64,14 @@ LABEL_ROW_SCHEMA = cv.Schema(
     }
 )
 
+CHECKBOX_ROW_SCHEMA = cv.Schema(
+    {
+        cv.Required(CONF_ROW_TYPE): cv.one_of("checkbox", lower=True),
+        cv.Required(CONF_LABEL): cv.string,
+        cv.Required(CONF_ENTITY): cv.entity_id,
+    }
+)
+
 
 def validate_row(value):
     if not isinstance(value, dict) or CONF_ROW_TYPE not in value:
@@ -77,6 +85,8 @@ def validate_row(value):
         return SENSOR_ROW_SCHEMA(value)
     if t == "label":
         return LABEL_ROW_SCHEMA(value)
+    if t == "checkbox":
+        return CHECKBOX_ROW_SCHEMA(value)
     raise cv.Invalid(f"Unknown row type: '{t}'")
 
 
@@ -147,6 +157,8 @@ async def to_code(config):
             cg.add(var.add_sensor_row(row[CONF_ENTITY], row[CONF_FORMAT]))
         elif row_type == "label":
             cg.add(var.add_label_row(row[CONF_TEXT]))
+        elif row_type == "checkbox":
+            cg.add(var.add_checkbox_row(row[CONF_LABEL], row[CONF_ENTITY]))
 
     if CONF_SUBMIT in content:
         cg.add(var.set_submit_label(content[CONF_SUBMIT][CONF_LABEL]))

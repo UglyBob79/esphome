@@ -176,6 +176,36 @@ void Page::build_ui() {
       if (this->font_)
         lv_obj_set_style_text_font(lbl, this->font_, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
       lv_obj_set_style_text_color(lbl, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+
+    } else if (row.type == RowType::CHECKBOX) {
+      lv_obj_t *cont = make_row_container(col);
+
+      // Label on the left — identical to toggle row
+      lv_obj_t *lbl = lv_label_create(cont);
+      lv_obj_align(lbl, LV_ALIGN_LEFT_MID, CONTENT_PAD, 0);
+      lv_label_set_text(lbl, row.checkbox.label);
+      if (this->font_)
+        lv_obj_set_style_text_font(lbl, this->font_, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(lbl, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+
+      // Plain square indicator on the right — avoids lv_checkbox text-space quirks
+      lv_obj_t *cb = lv_obj_create(cont);
+      lv_obj_set_size(cb, SWITCH_H, SWITCH_H);
+      lv_obj_align(cb, LV_ALIGN_RIGHT_MID, -CONTENT_PAD, 0);
+      lv_obj_clear_flag(cb, LV_OBJ_FLAG_SCROLLABLE);
+      lv_group_remove_obj(cb);
+      lv_obj_set_style_radius(cb, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(cb, 2, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(cb, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(cb, lv_color_make(255, 255, 255), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(cb, LV_OPA_COVER, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_all(cb, 0, (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(cb, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_CHECKED);
+
+      auto *inp = new CheckboxInput(cb);
+      inp->set_entity_id(row.checkbox.entity_id);
+      inp->set_page_active_ptr(&this->page_active_);
+      this->inputs_.push_back(inp);
     }
   }
 

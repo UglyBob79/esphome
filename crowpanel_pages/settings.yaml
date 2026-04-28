@@ -3,6 +3,6 @@ font: ${page_font}
 content:
   type: panel
   rows:
-    - type: toggle
+    - type: checkbox
       label: "Guest mode"
       entity: input_boolean.guest_mode
