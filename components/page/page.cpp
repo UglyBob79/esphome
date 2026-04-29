@@ -103,6 +103,9 @@ void Page::build_ui() {
       lv_obj_set_style_text_color(lbl, lv_color_make(0, 0, 0), (uint32_t)LV_PART_MAIN | (uint32_t)LV_STATE_DEFAULT);
 
       lv_obj_t *sw = lv_switch_create(cont);
+      lv_obj_set_style_anim_time(sw, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_anim_time(sw, 0, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+      lv_obj_set_style_anim_time(sw, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
       lv_obj_set_size(sw, SWITCH_W, SWITCH_H);
       lv_obj_align(sw, LV_ALIGN_RIGHT_MID, -CONTENT_PAD, 0);
       lv_group_remove_obj(sw);
