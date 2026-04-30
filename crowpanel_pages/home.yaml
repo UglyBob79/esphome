@@ -1,24 +1,8 @@
-id: page_home
-bg_color: 0xFFFFFF
-widgets:
-  - label:
-      align: TOP_MID
-      y: 12
-      text: "HOME"
-      text_color: 0x000000
-      text_font: font_large
-  - obj:
-      align: TOP_MID
-      y: 48
-      width: 360
-      height: 2
-      bg_color: 0x000000
-      bg_opa: COVER
-      border_width: 0
-      pad_all: 0
-  - label:
-      id: lbl_outdoor_temp
-      align: CENTER
-      text: "Shelly: -- °C"
-      text_color: 0x000000
-      text_font: font_large
+title: "HOME"
+font: ${page_font}
+content:
+  type: panel
+  rows:
+    - type: sensor
+      entity: sensor.shellypro3em_3ce90e6eaa68_temperature
+      format: "Outdoor: %.1f \xb0C"

@@ -1,5 +1,9 @@
 page:
   - !include
+    file: crowpanel_pages/home.yaml
+    vars:
+      page_font: font_large
+  - !include
     file: crowpanel_pages/actions.yaml
     vars:
       page_font: font_large

@@ -57,15 +57,6 @@ binary_sensor:
       - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_down();'
 
 
-sensor:
-  - platform: homeassistant
-    id: outdoor_temp
-    entity_id: sensor.shellypro3em_3ce90e6eaa68_temperature
-    on_value:
-      - lvgl.label.update:
-          id: lbl_outdoor_temp
-          text: !lambda 'return str_sprintf("Shelly: %.1f °C", x).c_str();'
-
 font:
   - file: apps/dashboard/fonts/GothamRnd-Bold.ttf
     id: font_large
@@ -99,5 +90,3 @@ lvgl:
           id(first_render) = false;
         }
     - component.update: epd
-  pages:
-    - !include crowpanel_pages/home.yaml
