@@ -3,6 +3,11 @@ substitutions:
   friendly_node_name: CrowPanel
   timezone: Europe/Stockholm
   page_font: font_large
+  eink_display: epd
+  eink_buffer_size: 25%
+  eink_btn_confirm: btn_confirm
+  eink_btn_up: btn_rotary_up
+  eink_btn_down: btn_rotary_down
 
 logger:
   level: VERY_VERBOSE
@@ -10,6 +15,7 @@ logger:
 packages:
   common: !include ../esphome-common/common/common_eink.yaml
   hardware: !include ../esphome-common/hardware/esp32/crowpanel-4.2.yaml
+  eink_hw: !include ../esphome-eink-ui/config/lvgl_eink.yaml
   eink_theme: !include ../esphome-eink-ui/config/eink_theme.yaml
   pages: !include crowpanel_pages.yaml
 
@@ -22,12 +28,6 @@ external_components:
       type: local
       path: ../esphome-eink-ui/components
     components: [page]
-
-globals:
-  - id: first_render
-    type: bool
-    restore_value: false
-    initial_value: 'true'
 
 binary_sensor:
   - id: !extend btn_menu
@@ -71,22 +71,3 @@ font:
     size: 18
     bpp: 1
 
-lvgl:
-  displays: epd
-  buffer_size: 25%
-  color_depth: 16
-  rotation: 180
-  encoders:
-    - id: main_encoder
-      enter_button: btn_confirm
-      sensor:
-        left_button: btn_rotary_up
-        right_button: btn_rotary_down
-      group: actions_group
-  on_draw_end:
-    - lambda: |
-        if (id(first_render)) {
-          id(epd).force_full_update();
-          id(first_render) = false;
-        }
-    - component.update: epd
