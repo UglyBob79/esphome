@@ -16,6 +16,7 @@ packages:
   common: !include ../esphome-common/common/common_eink.yaml
   hardware: !include ../esphome-common/hardware/esp32/crowpanel-4.2.yaml
   eink_hw: !include ../esphome-eink-ui/config/lvgl_eink.yaml
+  eink_fonts: !include ../esphome-eink-ui/config/fonts.yaml
   eink_theme: !include ../esphome-eink-ui/config/eink_theme.yaml
   pages: !include crowpanel_pages.yaml
 
@@ -48,18 +49,4 @@ binary_sensor:
     on_press:
       - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_down();'
 
-
-font:
-  - file: apps/dashboard/fonts/GothamRnd-Bold.ttf
-    id: font_large
-    size: 28
-    bpp: 1
-  - file: apps/dashboard/fonts/GothamRnd-Bold.ttf
-    id: font_medium
-    size: 22
-    bpp: 1
-  - file: apps/dashboard/fonts/GothamRnd-Book.ttf
-    id: font_small
-    size: 18
-    bpp: 1
 
