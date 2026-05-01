@@ -20,7 +20,13 @@ packages:
   eink_hw: !include ../esphome-eink-ui/config/lvgl_eink.yaml
   eink_fonts: !include ../esphome-eink-ui/config/fonts.yaml
   eink_theme: !include ../esphome-eink-ui/config/eink_theme.yaml
-  pages: !include crowpanel_pages.yaml
+
+page:
+  - !include crowpanel_pages/home.yaml
+  - !include crowpanel_pages/actions.yaml
+  - !include crowpanel_pages/poolpump.yaml
+  - !include crowpanel_pages/power.yaml
+  - !include crowpanel_pages/settings.yaml
 
 external_components:
   - source:
