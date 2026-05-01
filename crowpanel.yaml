@@ -22,24 +22,16 @@ packages:
 external_components:
   - source:
       type: local
-      path: components
-    components: [crowpanel_epaper]
-  - source:
-      type: local
       path: ../esphome-eink-ui/components
     components: [page]
 
 binary_sensor:
   - id: !extend btn_menu
-    filters:
-      - delayed_on: 100ms
     on_press:
       - lvgl.page.next:
           animation: NONE
 
   - id: !extend btn_exit
-    filters:
-      - delayed_on: 100ms
     on_press:
       - lvgl.page.previous:
           animation: NONE
