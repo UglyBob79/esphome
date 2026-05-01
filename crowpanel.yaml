@@ -5,6 +5,8 @@ substitutions:
   page_font: font_large
   eink_display: epd
   eink_buffer_size: 25%
+  eink_btn_next: btn_menu
+  eink_btn_prev: btn_exit
   eink_btn_confirm: btn_confirm
   eink_btn_up: btn_rotary_up
   eink_btn_down: btn_rotary_down
@@ -25,28 +27,4 @@ external_components:
       type: local
       path: ../esphome-eink-ui/components
     components: [page]
-
-binary_sensor:
-  - id: !extend btn_menu
-    on_press:
-      - lvgl.page.next:
-          animation: NONE
-
-  - id: !extend btn_exit
-    on_press:
-      - lvgl.page.previous:
-          animation: NONE
-
-  - id: !extend btn_confirm
-    on_press:
-      - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_confirm();'
-
-  - id: !extend btn_rotary_up
-    on_press:
-      - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_up();'
-
-  - id: !extend btn_rotary_down
-    on_press:
-      - lambda: 'auto* fp = esphome::page::Page::active; if (fp) fp->on_down();'
-
 
