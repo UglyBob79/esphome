@@ -6,6 +6,16 @@ esphome:
   includes:
     - apps/dashboard/eink_fetcher.h
 
+font:
+  - file: apps/dashboard/fonts/GothamRnd-Bold.ttf
+    id: font_title
+    size: 30
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,!-:()"
+  - file: apps/dashboard/fonts/GothamRnd-Book.ttf
+    id: font_body
+    size: 20
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,!-:()"
+
 globals:
   - id: eink_page_index
     type: int
@@ -22,10 +32,10 @@ script:
           char path[48];
           int next = id(eink_page_index) + 1;
           snprintf(path, sizeof(path), "/local/eink_page%d.bin", next);
-          if (eink_fetch("homeassistant.local", 8123, path)) {
+          if (eink_fetch("${ha_host}", ${ha_port}, path)) {
             id(eink_page_index) = next;
           } else {
-            eink_fetch("homeassistant.local", 8123, "/local/eink_page0.bin");
+            eink_fetch("${ha_host}", ${ha_port}, "/local/eink_page0.bin");
             id(eink_page_index) = 0;
           }
       - component.update: eink_display
@@ -33,9 +43,14 @@ script:
 display:
   - platform: waveshare_epaper
     id: !extend eink_display
+    rotation: ${display_rotation}
     lambda: |-
       if (!EINK_IMAGE_READY) {
+        int cx = it.get_width() / 2;
+        int cy = it.get_height() / 2;
         it.fill(COLOR_OFF);
+        it.printf(cx, cy - 30, id(font_title), COLOR_ON, TextAlign::CENTER, "No dashboard image");
+        it.printf(cx, cy + 20, id(font_body),  COLOR_ON, TextAlign::CENTER, "Check AppDaemon logs");
         return;
       }
       memcpy(DisplayBufAccessor::get(&it), EINK_IMAGE_BUF, 48000);

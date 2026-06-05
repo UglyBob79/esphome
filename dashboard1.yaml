@@ -1,6 +1,9 @@
 substitutions:
   node_name: dashboard1
   friendly_node_name: Dashboard Livingroom
+  display_rotation: "90"   # 0/180 = landscape, 90/270 = portrait
+  ha_host: "homeassistant.local"
+  ha_port: "8123"
 
 external_components:
   - source:
